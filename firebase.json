@@ -1,8 +1,11 @@
 {
   "functions": [
     {
-      "source": "functions",
-      "codebase": "default",
+      "source": "functions"
+    },
+    {
+      "source": "backend",
+      "codebase": "backend",
       "ignore": [
         "venv",
         ".git",
