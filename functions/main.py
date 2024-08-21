@@ -281,4 +281,5 @@ def submit():
     return jsonify(response)
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=4000, debug=True)
+    app.run(host='localhost', port=8080, debug=True)
+
