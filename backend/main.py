@@ -5,6 +5,8 @@ import spacy
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
+last_concatenated_keys = ""
+
 # Load SpaCy model
 try:
     nlp = spacy.load("en_core_web_sm")
@@ -202,6 +204,7 @@ ingredient_key_map = {
     "Chamomile": "o1"
 }
 
+
 # Predefined list of symptoms
 predefined_symptoms = set(symptom_diagnosis_db.keys())
 
@@ -246,13 +249,16 @@ def get_treatment(diagnoses):
     concatenated_keys = ''.join(treatment_keys)
     print(f"Concatenated treatment keys: {concatenated_keys}")  # Debug output
 
+    # Store the last generated concatenated string in the global variable
+    global last_concatenated_keys
+    last_concatenated_keys = concatenated_keys
+
     # Return treatment keys and the concatenated string
     return {
         "treatments": treatments,
         "treatment_keys": treatment_keys,
         "concatenated_keys": concatenated_keys
     }
-
 
 @app.route('/')
 def index():
@@ -276,9 +282,22 @@ def submit():
         'treatment_keys': treatment["treatment_keys"],
         'concatenated_keys': treatment["concatenated_keys"]
     }
-
     print(f"Response: {response}")  # Debug output
     return jsonify(response)
 
+# New route to retrieve the last concatenated keys
+@app.route('/last_keys', methods=['GET'])
+def get_last_keys():
+    global last_concatenated_keys  # Access the global variable
+
+    # Return the last generated concatenated string
+    return jsonify({
+        'last_concatenated_keys': last_concatenated_keys
+    })
+
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=4000, debug=True)
+    app.run(host='localhost', port=8080, debug=True)
+
+
+
+
