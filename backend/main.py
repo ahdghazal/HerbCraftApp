@@ -296,11 +296,6 @@ def get_last_keys():
     })
 
 
-@app.route('/update-keys', methods=['OPTIONS'])
-def options():
-    return jsonify({'message': 'Preflight check successful'}), 200
-
-
 if __name__ == '__main__':
     app.run(host='localhost', port=8080, debug=True)
 
