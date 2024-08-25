@@ -270,28 +270,41 @@ last_concatenated_keys = ''
 
 @app.route('/submit', methods=['POST'])
 def submit():
+    global last_concatenated_keys, last_analysis_result
+
     data = request.json
     complaint = data.get('complaint', '')
-    selectedProductKeys = data.get('selectedProductKeys', [])
+    selected_product_keys = data.get('selectedProductKeys', [])
 
-    # Process complaint and selectedProductKeys...
-    # Assume the processing logic gives you the following results:
-    concatenated_keys = "o26o14"
-    diagnosis = ["Viral Infection", "Pharyngitis", "Muscle Cramps", "Tension Headache"]
-    herbs = ["Thyme", "Liquorice", "Turmeric", "Chamomile", "Mint"]
-    symptoms = ["muscle cramps", "headache", "fever", "sore throat"]
-    treatment_keys = ["o2", "6", "o1", "4"]
+    # Step 1: Text Analysis for Symptoms, Diagnosis, and Treatments
+    symptoms = [word for word in complaint.split() if word in symptom_diagnosis_db]
+    diagnosis = [symptom_diagnosis_db[symptom] for symptom in symptoms]
+    herbs = set()
+    treatment_keys = []
+    for diag in diagnosis:
+        treatments = diagnosis_treatment_db.get(diag, [])
+        herbs.update(treatments)
+        for treatment in treatments:
+            if treatment in ingredient_key_map:
+                treatment_keys.append(ingredient_key_map[treatment])
 
-    # Return the response including selectedProductKeys
-    return jsonify({
-        "concatenated_keys": concatenated_keys,
-        "diagnosis": diagnosis,
-        "herbs": herbs,
+    concatenated_keys = ''.join(treatment_keys)
+
+    # Step 2: Append selected product keys to concatenated keys
+    concatenated_keys += ''.join(selected_product_keys)
+    print(selected_product_keys)
+    # Step 3: Store the result
+    last_concatenated_keys = concatenated_keys
+    last_analysis_result = {
         "symptoms": symptoms,
+        "diagnosis": diagnosis,
+        "herbs": list(herbs),
         "treatment_keys": treatment_keys,
-        "selectedProductKeys": selectedProductKeys  # Include the selected product keys in the response
-    })
+        "concatenated_keys": concatenated_keys,
+        "selectedProductKeys": selected_product_keys
+    }
 
+    return jsonify(last_analysis_result)
 
 
 # New route to retrieve the last concatenated keys
