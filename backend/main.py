@@ -5,8 +5,6 @@ import spacy
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
-last_concatenated_keys = ""
-
 # Load SpaCy model
 try:
     nlp = spacy.load("en_core_web_sm")
@@ -260,39 +258,62 @@ def get_treatment(diagnoses):
         "concatenated_keys": concatenated_keys
     }
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
+
+last_analysis_result = {}
+last_concatenated_keys = ''
+
+
 @app.route('/submit', methods=['POST'])
 def submit():
-    data = request.get_json()
+    global last_concatenated_keys, last_analysis_result
+
+    data = request.json
     complaint = data.get('complaint', '')
-    print(f"Received complaint: {complaint}")  # Debug output
-    symptoms = extract_symptoms(complaint)
-    print(f"Extracted symptoms: {symptoms}")  # Debug output
-    diagnosis = diagnose(symptoms)
-    print(f"Diagnosis: {diagnosis}")  # Debug output
-    treatment = get_treatment(diagnosis)
-    print(f"Treatment: {treatment}")  # Debug output
-    response = {
-        'symptoms': symptoms,
-        'diagnosis': diagnosis,
-        'herbs': treatment["treatments"],
-        'treatment_keys': treatment["treatment_keys"],
-        'concatenated_keys': treatment["concatenated_keys"]
+    selected_product_keys = data.get('selectedProductKeys', [])
+
+    # Step 1: Text Analysis for Symptoms, Diagnosis, and Treatments
+    symptoms = [word for word in complaint.split() if word in symptom_diagnosis_db]
+    diagnosis = [symptom_diagnosis_db[symptom] for symptom in symptoms]
+    herbs = set()
+    treatment_keys = []
+    for diag in diagnosis:
+        treatments = diagnosis_treatment_db.get(diag, [])
+        herbs.update(treatments)
+        for treatment in treatments:
+            if treatment in ingredient_key_map:
+                treatment_keys.append(ingredient_key_map[treatment])
+
+    concatenated_keys = ''.join(treatment_keys)
+
+    # Step 2: Append selected product keys to concatenated keys
+    concatenated_keys += ''.join(selected_product_keys)
+
+    # Step 3: Store the result
+    last_concatenated_keys = concatenated_keys
+    last_analysis_result = {
+        "symptoms": symptoms,
+        "diagnosis": diagnosis,
+        "herbs": list(herbs),
+        "treatment_keys": treatment_keys,
+        "concatenated_keys": concatenated_keys,
+        "selectedProductKeys": selected_product_keys
     }
-    print(f"Response: {response}")  # Debug output
-    return jsonify(response)
+
+    return jsonify(last_analysis_result)
+
 
 # New route to retrieve the last concatenated keys
 @app.route('/last_keys', methods=['GET'])
 def get_last_keys():
-    global last_concatenated_keys  # Access the global variable
-
-    # Return the last generated concatenated string
+    global last_concatenated_keys, last_analysis_result
     return jsonify({
-        'last_concatenated_keys': last_concatenated_keys
+        "analysis_result": last_analysis_result,
+        "concatenated_keys": last_concatenated_keys
     })
 
 
