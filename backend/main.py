@@ -206,58 +206,6 @@ ingredient_key_map = {
 # Predefined list of symptoms
 predefined_symptoms = set(symptom_diagnosis_db.keys())
 
-def extract_symptoms(text):
-    print(f"Analyzing text: {text}")  # Debug output
-    doc = nlp(text.lower())
-    symptoms = []
-    for token in doc:
-        # Match multi-word symptoms
-        for length in range(1, 3):  # Check for symptoms of 1 or 2 words
-            span = ' '.join([doc[i].text for i in range(token.i, min(token.i + length, len(doc)))])
-            if span in predefined_symptoms:
-                symptoms.append(span)
-                print(f"Identified symptom: {span}")  # Debug output
-                break  # Stop if a match is found for the current token
-    return list(set(symptoms))  # Remove duplicates
-
-def diagnose(symptoms):
-    diagnoses = []
-    for symptom in symptoms:
-        if symptom in symptom_diagnosis_db:
-            diagnosis = symptom_diagnosis_db[symptom]
-            diagnoses.append(diagnosis)
-            print(f"Symptom '{symptom}' diagnosed as '{diagnosis}'")  # Debug output
-    return list(set(diagnoses))  # Remove duplicates
-
-def get_treatment(diagnoses):
-    treatments = []
-    for diagnosis in diagnoses:
-        if diagnosis in diagnosis_treatment_db:
-            treatment = diagnosis_treatment_db[diagnosis]
-            treatments.extend(treatment)
-            print(f"Diagnosis '{diagnosis}' treated with '{treatment}'")  # Debug output
-
-    # Print all treatments before mapping
-    print(f"All treatments: {treatments}")  # Debug output
-
-    # Map treatments to their keys
-    treatment_keys = [ingredient_key_map[ingredient] for ingredient in treatments if ingredient in ingredient_key_map]
-
-    # Concatenate the keys into a single string
-    concatenated_keys = ''.join(treatment_keys)
-    print(f"Concatenated treatment keys: {concatenated_keys}")  # Debug output
-
-    # Store the last generated concatenated string in the global variable
-    global last_concatenated_keys
-    last_concatenated_keys = concatenated_keys
-
-    # Return treatment keys and the concatenated string
-    return {
-        "treatments": treatments,
-        "treatment_keys": treatment_keys,
-        "concatenated_keys": concatenated_keys
-    }
-
 
 @app.route('/')
 def index():
@@ -292,7 +240,6 @@ def submit():
 
     # Step 2: Append selected product keys to concatenated keys
     concatenated_keys += ''.join(selected_product_keys)
-    print(selected_product_keys)
     # Step 3: Store the result
     last_concatenated_keys = concatenated_keys
     last_analysis_result = {
