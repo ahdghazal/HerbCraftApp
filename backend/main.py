@@ -310,7 +310,6 @@ def submit():
 # New route to retrieve the last concatenated keys
 @app.route('/last_keys', methods=['GET'])
 def get_last_keys():
-    global last_concatenated_keys, last_analysis_result
     return jsonify({
         "concatenated_keys": last_concatenated_keys
     })
