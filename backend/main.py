@@ -312,7 +312,6 @@ def submit():
 def get_last_keys():
     global last_concatenated_keys, last_analysis_result
     return jsonify({
-        "analysis_result": last_analysis_result,
         "concatenated_keys": last_concatenated_keys
     })
 
