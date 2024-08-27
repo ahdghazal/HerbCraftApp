@@ -225,27 +225,33 @@ def submit():
     selected_product_keys = data.get('selectedProductKeys', [])
 
     # Step 1: Text Analysis for Symptoms, Diagnosis, and Treatments
-    symptoms = [word for word in complaint.split() if word in symptom_diagnosis_db]
-    diagnosis = [symptom_diagnosis_db[symptom] for symptom in symptoms]
-    herbs = set()
-    treatment_keys = []
-    for diag in diagnosis:
-        treatments = diagnosis_treatment_db.get(diag, [])
-        herbs.update(treatments)
-        for treatment in treatments:
-            if treatment in ingredient_key_map:
-                treatment_keys.append(ingredient_key_map[treatment])
+    doc = nlp(complaint.lower())
+    detected_symptoms = []
+    detected_diagnosis = []
+    detected_treatments = []
 
-    concatenated_keys = ''.join(treatment_keys)
+    for token in doc:
+        if token.text in symptom_diagnosis_db:
+            symptom = token.text
+            diagnosis = symptom_diagnosis_db[symptom]
+            treatments = diagnosis_treatment_db.get(diagnosis, [])
+            detected_symptoms.append(symptom)
+            detected_diagnosis.append(diagnosis)
+            detected_treatments.extend(treatments)
 
-    # Step 2: Append selected product keys to concatenated keys
-    concatenated_keys += ''.join(selected_product_keys)
-    # Step 3: Store the result
-    last_concatenated_keys = concatenated_keys
+    detected_treatments = list(set(detected_treatments))  # Remove duplicates
+    treatment_keys = [ingredient_key_map[treatment] for treatment in detected_treatments if treatment in ingredient_key_map]
+
+    # Step 2: Concatenate treatment keys with selected product keys
+    all_keys = treatment_keys + selected_product_keys
+    concatenated_keys = ''.join(all_keys)
+    last_concatenated_keys = concatenated_keys  # Update the global variable
+
+    # Save the last analysis result
     last_analysis_result = {
-        "symptoms": symptoms,
-        "diagnosis": diagnosis,
-        "herbs": list(herbs),
+        "symptoms": detected_symptoms,
+        "diagnosis": detected_diagnosis,
+        "herbs": detected_treatments,
         "treatment_keys": treatment_keys,
         "concatenated_keys": concatenated_keys,
         "selectedProductKeys": selected_product_keys
@@ -257,9 +263,8 @@ def submit():
 # New route to retrieve the last concatenated keys
 @app.route('/last_keys', methods=['GET'])
 def get_last_keys():
-    return jsonify({
-        "concatenated_keys": last_concatenated_keys
-    })
+    global last_concatenated_keys
+    return jsonify({"last_concatenated_keys": last_concatenated_keys})
 
 
 if __name__ == '__main__':
