@@ -202,84 +202,88 @@ ingredient_key_map = {
     "Chamomile": "o1"
 }
 
+
 # Predefined list of symptoms
 predefined_symptoms = set(symptom_diagnosis_db.keys())
-
-def extract_symptoms(text):
-    print(f"Analyzing text: {text}")  # Debug output
-    doc = nlp(text.lower())
-    symptoms = []
-    for token in doc:
-        # Match multi-word symptoms
-        for length in range(1, 3):  # Check for symptoms of 1 or 2 words
-            span = ' '.join([doc[i].text for i in range(token.i, min(token.i + length, len(doc)))])
-            if span in predefined_symptoms:
-                symptoms.append(span)
-                print(f"Identified symptom: {span}")  # Debug output
-                break  # Stop if a match is found for the current token
-    return list(set(symptoms))  # Remove duplicates
-
-def diagnose(symptoms):
-    diagnoses = []
-    for symptom in symptoms:
-        if symptom in symptom_diagnosis_db:
-            diagnosis = symptom_diagnosis_db[symptom]
-            diagnoses.append(diagnosis)
-            print(f"Symptom '{symptom}' diagnosed as '{diagnosis}'")  # Debug output
-    return list(set(diagnoses))  # Remove duplicates
-
-def get_treatment(diagnoses):
-    treatments = []
-    for diagnosis in diagnoses:
-        if diagnosis in diagnosis_treatment_db:
-            treatment = diagnosis_treatment_db[diagnosis]
-            treatments.extend(treatment)
-            print(f"Diagnosis '{diagnosis}' treated with '{treatment}'")  # Debug output
-
-    # Print all treatments before mapping
-    print(f"All treatments: {treatments}")  # Debug output
-
-    # Map treatments to their keys
-    treatment_keys = [ingredient_key_map[ingredient] for ingredient in treatments if ingredient in ingredient_key_map]
-
-    # Concatenate the keys into a single string
-    concatenated_keys = ''.join(treatment_keys)
-    print(f"Concatenated treatment keys: {concatenated_keys}")  # Debug output
-
-    # Return treatment keys and the concatenated string
-    return {
-        "treatments": treatments,
-        "treatment_keys": treatment_keys,
-        "concatenated_keys": concatenated_keys
-    }
 
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
+
+last_analysis_result = {}
+last_concatenated_keys = ''
+
+
 @app.route('/submit', methods=['POST'])
 def submit():
-    data = request.get_json()
+    global last_concatenated_keys, last_analysis_result
+
+    data = request.json
+    print("Received data:", data)  # Debugging: Print received data
+
     complaint = data.get('complaint', '')
-    print(f"Received complaint: {complaint}")  # Debug output
-    symptoms = extract_symptoms(complaint)
-    print(f"Extracted symptoms: {symptoms}")  # Debug output
-    diagnosis = diagnose(symptoms)
-    print(f"Diagnosis: {diagnosis}")  # Debug output
-    treatment = get_treatment(diagnosis)
-    print(f"Treatment: {treatment}")  # Debug output
-    response = {
-        'symptoms': symptoms,
-        'diagnosis': diagnosis,
-        'herbs': treatment["treatments"],
-        'treatment_keys': treatment["treatment_keys"],
-        'concatenated_keys': treatment["concatenated_keys"]
+    selected_product_keys = data.get('selectedProductKeys', [])
+    print("Complaint:", complaint)  # Debugging: Print the complaint
+    print("Selected Product Keys:", selected_product_keys)  # Debugging: Print selected keys
+
+    # Step 1: Text Analysis for Symptoms, Diagnosis, and Treatments
+    doc = nlp(complaint.lower())
+    detected_symptoms = []
+    detected_diagnosis = []
+    detected_treatments = []
+
+    for token in doc:
+        if token.text in symptom_diagnosis_db:
+            symptom = token.text
+            diagnosis = symptom_diagnosis_db[symptom]
+            treatments = diagnosis_treatment_db.get(diagnosis, [])
+            detected_symptoms.append(symptom)
+            detected_diagnosis.append(diagnosis)
+            detected_treatments.extend(treatments)
+
+    print("Detected Symptoms:", detected_symptoms)  # Debugging: Print detected symptoms
+    print("Detected Diagnosis:", detected_diagnosis)  # Debugging: Print detected diagnosis
+    print("Detected Treatments:", detected_treatments)  # Debugging: Print detected treatments
+
+    detected_treatments = list(set(detected_treatments))  # Remove duplicates
+    treatment_keys = [ingredient_key_map[treatment] for treatment in detected_treatments if treatment in ingredient_key_map]
+
+    print("Treatment Keys:", treatment_keys)  # Debugging: Print treatment keys
+
+    # Step 2: Concatenate treatment keys with selected product keys
+    all_keys = treatment_keys + selected_product_keys
+    concatenated_keys = ''.join(all_keys)
+    print("Concatenated Keys:", concatenated_keys)  # Debugging: Print concatenated keys
+    last_concatenated_keys = concatenated_keys  # Update the global variable
+
+    # Save the last analysis result
+    last_analysis_result = {
+        "symptoms": detected_symptoms,
+        "diagnosis": detected_diagnosis,
+        "herbs": detected_treatments,
+        "treatment_keys": treatment_keys,
+        "concatenated_keys": concatenated_keys,
+        "selectedProductKeys": selected_product_keys
     }
 
-    print(f"Response: {response}")  # Debug output
-    return jsonify(response)
+    print("Last Analysis Result:", last_analysis_result)  # Debugging: Print the final result
+
+    return jsonify(last_analysis_result)
+
+
+
+# New route to retrieve the last concatenated keys
+@app.route('/last_keys', methods=['GET'])
+def get_last_keys():
+    global last_concatenated_keys
+    return jsonify({"last_concatenated_keys": last_concatenated_keys})
+
 
 if __name__ == '__main__':
     app.run(host='localhost', port=8080, debug=True)
+
+
+
 
