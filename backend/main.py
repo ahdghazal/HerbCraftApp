@@ -221,8 +221,12 @@ def submit():
     global last_concatenated_keys, last_analysis_result
 
     data = request.json
+    print("Received data:", data)  # Debugging: Print received data
+
     complaint = data.get('complaint', '')
     selected_product_keys = data.get('selectedProductKeys', [])
+    print("Complaint:", complaint)  # Debugging: Print the complaint
+    print("Selected Product Keys:", selected_product_keys)  # Debugging: Print selected keys
 
     # Step 1: Text Analysis for Symptoms, Diagnosis, and Treatments
     doc = nlp(complaint.lower())
@@ -239,12 +243,19 @@ def submit():
             detected_diagnosis.append(diagnosis)
             detected_treatments.extend(treatments)
 
+    print("Detected Symptoms:", detected_symptoms)  # Debugging: Print detected symptoms
+    print("Detected Diagnosis:", detected_diagnosis)  # Debugging: Print detected diagnosis
+    print("Detected Treatments:", detected_treatments)  # Debugging: Print detected treatments
+
     detected_treatments = list(set(detected_treatments))  # Remove duplicates
     treatment_keys = [ingredient_key_map[treatment] for treatment in detected_treatments if treatment in ingredient_key_map]
+
+    print("Treatment Keys:", treatment_keys)  # Debugging: Print treatment keys
 
     # Step 2: Concatenate treatment keys with selected product keys
     all_keys = treatment_keys + selected_product_keys
     concatenated_keys = ''.join(all_keys)
+    print("Concatenated Keys:", concatenated_keys)  # Debugging: Print concatenated keys
     last_concatenated_keys = concatenated_keys  # Update the global variable
 
     # Save the last analysis result
@@ -257,7 +268,10 @@ def submit():
         "selectedProductKeys": selected_product_keys
     }
 
+    print("Last Analysis Result:", last_analysis_result)  # Debugging: Print the final result
+
     return jsonify(last_analysis_result)
+
 
 
 # New route to retrieve the last concatenated keys
