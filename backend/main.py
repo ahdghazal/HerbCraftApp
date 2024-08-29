@@ -317,7 +317,7 @@ def delete_herb():
 
 @app.route('/herbs', methods=['GET'])
 def get_herbs():
-    return herbs
+    return jsonify(herbs)
 
 
 if __name__ == '__main__':

@@ -202,6 +202,24 @@ ingredient_key_map = {
     "Chamomile": "o1"
 }
 
+herbs = {
+    "Lavender": 100,
+    "Green Tea": 100,
+    "Fennel": 100,
+    "Mint": 100,
+    "Ginger": 100,
+    "Turmeric": 100,
+    "Marjoram": 100,
+    "Cinnamon": 100,
+    "Felty Germander": 100,
+    "Thyme": 100,
+    "Rosemary": 100,
+    "Fenugreek": 100,
+    "Anise": 100,
+    "Cumin": 100,
+    "Sage": 100,
+    "Chamomile": 100,
+}
 
 # Predefined list of symptoms
 predefined_symptoms = set(symptom_diagnosis_db.keys())
@@ -273,12 +291,33 @@ def submit():
     return jsonify(last_analysis_result)
 
 
-
-# New route to retrieve the last concatenated keys
 @app.route('/last_keys', methods=['GET'])
 def get_last_keys():
     global last_concatenated_keys
-    return jsonify({"last_concatenated_keys": last_concatenated_keys})
+    return jsonify(last_concatenated_keys)
+
+
+@app.route('/add_herb', methods=['POST'])
+def add_herb():
+    new_herb = request.json.get('herb_name')
+    if new_herb and new_herb not in herbs:
+        herbs[new_herb] = 100
+        return jsonify({"message": f"Herb '{new_herb}' added successfully."})
+    return jsonify({"error": "Herb already exists or invalid name."}), 400
+
+
+@app.route('/delete_herb', methods=['POST'])
+def delete_herb():
+    herb_name = request.json.get('herb_name')
+    if herb_name in herbs:
+        del herbs[herb_name]
+        return jsonify({"message": f"Herb '{herb_name}' deleted successfully."})
+    return jsonify({"error": "Herb not found."}), 400
+
+
+@app.route('/herbs', methods=['GET'])
+def get_herbs():
+    return jsonify(herbs)
 
 
 if __name__ == '__main__':
