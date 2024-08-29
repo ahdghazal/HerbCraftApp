@@ -203,22 +203,22 @@ ingredient_key_map = {
 }
 
 herbs = {
-    "herb1": 100,
-    "herb2": 100,
-    "herb3": 100,
-    "herb4": 100,
-    "herb5": 100,
-    "herb6": 100,
-    "herb7": 100,
-    "herb8": 100,
-    "herb9": 100,
-    "herb10": 100,
-    "herb11": 100,
-    "herb12": 100,
-    "herb13": 100,
-    "herb14": 100,
-    "herb15": 100,
-    "herb16": 100,
+    "Lavender": 100,
+    "Green Tea": 100,
+    "Fennel": 100,
+    "Mint": 100,
+    "Ginger": 100,
+    "Turmeric": 100,
+    "Marjoram": 100,
+    "Cinnamon": 100,
+    "Felty Germander": 100,
+    "Thyme": 100,
+    "Rosemary": 100,
+    "Fenugreek": 100,
+    "Anise": 100,
+    "Cumin": 100,
+    "Sage": 100,
+    "Chamomile": 100,
 }
 
 # Predefined list of symptoms
@@ -317,7 +317,7 @@ def delete_herb():
 
 @app.route('/herbs', methods=['GET'])
 def get_herbs():
-    return jsonify(herbs)
+    return herbs
 
 
 if __name__ == '__main__':
