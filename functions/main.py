@@ -294,7 +294,14 @@ def submit():
 @app.route('/last_keys', methods=['GET'])
 def get_last_keys():
     global last_concatenated_keys
-    return jsonify(last_concatenated_keys)
+    last_keys = request.args.get('last_keys', '')  # Assuming last_keys are passed as a query parameter
+    herbs_to_update = last_keys.split(',')  # Assuming last_keys is a comma-separated string of herb names
+
+    for herb in herbs_to_update:
+        if herb in herbs:
+            herbs[herb] = max(herbs[herb] - 10, 0)  # Reduce by 10% and avoid negative amounts
+
+    return jsonify(last_concatenated_keys)  # Returning the updated herbs data
 
 
 @app.route('/add_herb', methods=['POST'])
