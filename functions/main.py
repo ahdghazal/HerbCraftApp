@@ -270,11 +270,22 @@ def submit():
 
     print("Treatment Keys:", treatment_keys)  # Debugging: Print treatment keys
 
-    # Step 2: Concatenate treatment keys with selected product keys
+    # Step 1: Concatenate treatment keys with selected product keys
     all_keys = treatment_keys + selected_product_keys
-    concatenated_keys = ''.join(all_keys)
-    print("Concatenated Keys:", concatenated_keys)  # Debugging: Print concatenated keys
-    last_concatenated_keys = concatenated_keys  # Update the global variable
+
+    # Step 2: Sort the keys with numeric ones first and "o" ones last
+    numeric_keys = sorted([key for key in all_keys if not key.startswith('o')])
+    o_keys = sorted([key for key in all_keys if key.startswith('o')])
+
+    # Step 3: Concatenate sorted keys
+    sorted_keys = numeric_keys + o_keys
+    concatenated_keys = ''.join(sorted_keys)
+
+    # Debugging: Print concatenated keys
+    print("Concatenated Keys:", concatenated_keys)
+
+    # Update the global variable
+    last_concatenated_keys = concatenated_keys
 
     for treatment in detected_treatments:
         if treatment in herbs:
