@@ -256,7 +256,6 @@ ingredient_key_map = {
 # Predefined list of symptoms
 predefined_symptoms = set(symptom_diagnosis_db.keys())
 
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -331,7 +330,7 @@ def submit():
 @app.route('/last_keys', methods=['GET'])
 def get_last_keys():
     global last_concatenated_keys
-    return jsonify(last_concatenated_keys)  # Returning the updated herbs data
+    return jsonify({"last_keys": last_concatenated_keys})  # Returning the updated herbs data
 
 
 @app.route('/add_herb', methods=['POST'])
@@ -349,15 +348,9 @@ def delete_herb():
     herb_name = request.json.get('herb_name')
     if herb_name in herbs:
         del herbs[herb_name]
-        save_herbs(herbs)  # Save the changes to CSV
+        save_herbs(herbs)  # Save the updated herbs list to CSV
         return jsonify({"message": f"Herb '{herb_name}' deleted successfully."})
     return jsonify({"error": "Herb not found."}), 400
-
-
-@app.route('/herbs', methods=['GET'])
-def get_herbs():
-    return jsonify(herbs)
-
 
 
 if __name__ == '__main__':
