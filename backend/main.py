@@ -1,6 +1,52 @@
 from flask import Flask, request, render_template, jsonify
 from flask_cors import CORS
 import spacy
+import csv
+import os
+
+CSV_FILE = 'herbs.csv'
+
+# Load herb data from CSV file
+def load_herbs_from_csv():
+    herbs = {}
+    if os.path.exists(CSV_FILE):
+        with open(CSV_FILE, mode='r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                herbs[row['herb']] = {"percentage": int(row['percentage'])}
+    else:
+        # Initialize with default herbs if CSV doesn't exist
+        herbs = {
+            "Lavender": {"percentage": 100},
+            "Green Tea": {"percentage": 100},
+            "Fennel": {"percentage": 100},
+            "Mint": {"percentage": 100},
+            "Ginger": {"percentage": 100},
+            "Turmeric": {"percentage": 100},
+            "Marjoram": {"percentage": 100},
+            "Cinnamon": {"percentage": 100},
+            "Felty Germander": {"percentage": 100},
+            "Thyme": {"percentage": 100},
+            "Rosemary": {"percentage": 100},
+            "Fenugreek": {"percentage": 100},
+            "Anise": {"percentage": 100},
+            "Cumin": {"percentage": 100},
+            "Sage": {"percentage": 100},
+            "Chamomile": {"percentage": 100},
+        }
+        save_herbs_to_csv(herbs)
+    return herbs
+
+# Save herb data to CSV file
+def save_herbs_to_csv(herbs):
+    with open(CSV_FILE, mode='w', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=['herb', 'percentage'])
+        writer.writeheader()
+        for herb, data in herbs.items():
+            writer.writerow({'herb': herb, 'percentage': data['percentage']})
+
+# Initialize herbs from CSV
+herbs = load_herbs_from_csv()
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -186,13 +232,13 @@ diagnosis_treatment_db = {
 ingredient_key_map = {
     "Lavender": "1", #missing
     "Green Tea": "2",
-    "Fennel": "3", #missing
+    "Felty Germander": "3", #missing
     "Mint": "4",
     "Ginger": "5",
     "Turmeric": "6", #missing
     "Marjoram": "7",
     "Cinnamon": "8",
-    "Felty Germander": "o3",
+    "Fennel": "o3",
     "Thyme": "o2",
     "Rosemary": "o5",
     "Fenugreek": "o4",
@@ -202,24 +248,6 @@ ingredient_key_map = {
     "Chamomile": "o1"
 }
 
-herbs = {
-    "Lavender": 100,
-    "Green Tea": 100,
-    "Fennel": 100,
-    "Mint": 100,
-    "Ginger": 100,
-    "Turmeric": 100,
-    "Marjoram": 100,
-    "Cinnamon": 100,
-    "Felty Germander": 100,
-    "Thyme": 100,
-    "Rosemary": 100,
-    "Fenugreek": 100,
-    "Anise": 100,
-    "Cumin": 100,
-    "Sage": 100,
-    "Chamomile": 100,
-}
 
 # Predefined list of symptoms
 predefined_symptoms = set(symptom_diagnosis_db.keys())
@@ -239,12 +267,9 @@ def submit():
     global last_concatenated_keys, last_analysis_result
 
     data = request.json
-    print("Received data:", data)  # Debugging: Print received data
 
     complaint = data.get('complaint', '')
     selected_product_keys = data.get('selectedProductKeys', [])
-    print("Complaint:", complaint)  # Debugging: Print the complaint
-    print("Selected Product Keys:", selected_product_keys)  # Debugging: Print selected keys
 
     # Step 1: Text Analysis for Symptoms, Diagnosis, and Treatments
     doc = nlp(complaint.lower())
@@ -261,20 +286,29 @@ def submit():
             detected_diagnosis.append(diagnosis)
             detected_treatments.extend(treatments)
 
-    print("Detected Symptoms:", detected_symptoms)  # Debugging: Print detected symptoms
-    print("Detected Diagnosis:", detected_diagnosis)  # Debugging: Print detected diagnosis
-    print("Detected Treatments:", detected_treatments)  # Debugging: Print detected treatments
-
     detected_treatments = list(set(detected_treatments))  # Remove duplicates
     treatment_keys = [ingredient_key_map[treatment] for treatment in detected_treatments if treatment in ingredient_key_map]
 
-    print("Treatment Keys:", treatment_keys)  # Debugging: Print treatment keys
-
-    # Step 2: Concatenate treatment keys with selected product keys
+    # Step 1: Concatenate treatment keys with selected product keys
     all_keys = treatment_keys + selected_product_keys
-    concatenated_keys = ''.join(all_keys)
-    print("Concatenated Keys:", concatenated_keys)  # Debugging: Print concatenated keys
-    last_concatenated_keys = concatenated_keys  # Update the global variable
+
+    # Step 2: Sort the keys with numeric ones first and "o" ones last
+    numeric_keys = sorted([key for key in all_keys if not key.startswith('o')])
+    o_keys = sorted([key for key in all_keys if key.startswith('o')])
+
+    # Step 3: Concatenate sorted keys
+    sorted_keys = numeric_keys + o_keys
+    concatenated_keys = ''.join(sorted_keys)
+
+    # Update the global variable
+    last_concatenated_keys = concatenated_keys
+
+    # Correctly update the herb percentages and save to CSV
+    for treatment in detected_treatments:
+        if treatment in herbs:
+            herbs[treatment]["percentage"] -= 10
+            herbs[treatment]["percentage"] = max(herbs[treatment]["percentage"], 0)  # Ensure percentage doesn't go below 0
+    save_herbs_to_csv(herbs)  # Save updated herbs to CSV
 
     # Save the last analysis result
     last_analysis_result = {
@@ -286,22 +320,23 @@ def submit():
         "selectedProductKeys": selected_product_keys
     }
 
-    print("Last Analysis Result:", last_analysis_result)  # Debugging: Print the final result
-
     return jsonify(last_analysis_result)
+
+
 
 
 @app.route('/last_keys', methods=['GET'])
 def get_last_keys():
     global last_concatenated_keys
-    return jsonify(last_concatenated_keys)
+    return jsonify(last_concatenated_keys)  # Returning the updated herbs data
 
 
 @app.route('/add_herb', methods=['POST'])
 def add_herb():
     new_herb = request.json.get('herb_name')
     if new_herb and new_herb not in herbs:
-        herbs[new_herb] = 100
+        herbs[new_herb] = {"percentage": 100}
+        save_herbs_to_csv(herbs)  # Save updated herbs to CSV
         return jsonify({"message": f"Herb '{new_herb}' added successfully."})
     return jsonify({"error": "Herb already exists or invalid name."}), 400
 
@@ -311,8 +346,10 @@ def delete_herb():
     herb_name = request.json.get('herb_name')
     if herb_name in herbs:
         del herbs[herb_name]
+        save_herbs_to_csv(herbs)  # Save updated herbs to CSV
         return jsonify({"message": f"Herb '{herb_name}' deleted successfully."})
     return jsonify({"error": "Herb not found."}), 400
+
 
 
 @app.route('/herbs', methods=['GET'])
