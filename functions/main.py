@@ -1,6 +1,52 @@
 from flask import Flask, request, render_template, jsonify
 from flask_cors import CORS
 import spacy
+import csv
+import os
+
+CSV_FILE = 'herbs.csv'
+
+# Load herb data from CSV file
+def load_herbs_from_csv():
+    herbs = {}
+    if os.path.exists(CSV_FILE):
+        with open(CSV_FILE, mode='r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                herbs[row['herb']] = {"percentage": int(row['percentage'])}
+    else:
+        # Initialize with default herbs if CSV doesn't exist
+        herbs = {
+            "Lavender": {"percentage": 100},
+            "Green Tea": {"percentage": 100},
+            "Fennel": {"percentage": 100},
+            "Mint": {"percentage": 100},
+            "Ginger": {"percentage": 100},
+            "Turmeric": {"percentage": 100},
+            "Marjoram": {"percentage": 100},
+            "Cinnamon": {"percentage": 100},
+            "Felty Germander": {"percentage": 100},
+            "Thyme": {"percentage": 100},
+            "Rosemary": {"percentage": 100},
+            "Fenugreek": {"percentage": 100},
+            "Anise": {"percentage": 100},
+            "Cumin": {"percentage": 100},
+            "Sage": {"percentage": 100},
+            "Chamomile": {"percentage": 100},
+        }
+        save_herbs_to_csv(herbs)
+    return herbs
+
+# Save herb data to CSV file
+def save_herbs_to_csv(herbs):
+    with open(CSV_FILE, mode='w', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=['herb', 'percentage'])
+        writer.writeheader()
+        for herb, data in herbs.items():
+            writer.writerow({'herb': herb, 'percentage': data['percentage']})
+
+# Initialize herbs from CSV
+herbs = load_herbs_from_csv()
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -202,24 +248,6 @@ ingredient_key_map = {
     "Chamomile": "o1"
 }
 
-herbs = {
-    "Lavender": {"percentage":100},
-    "Green Tea": {"percentage":100},
-    "Fennel": {"percentage":100},
-    "Mint": {"percentage":100},
-    "Ginger": {"percentage":100},
-    "Turmeric": {"percentage":100},
-    "Marjoram": {"percentage":100},
-    "Cinnamon": {"percentage":100},
-    "Felty Germander": {"percentage":100},
-    "Thyme": {"percentage":100},
-    "Rosemary": {"percentage":100},
-    "Fenugreek": {"percentage":100},
-    "Anise": {"percentage":100},
-    "Cumin": {"percentage":100},
-    "Sage": {"percentage":100},
-    "Chamomile": {"percentage":100},
-}
 
 # Predefined list of symptoms
 predefined_symptoms = set(symptom_diagnosis_db.keys())
@@ -275,11 +303,12 @@ def submit():
     # Update the global variable
     last_concatenated_keys = concatenated_keys
 
-    # Correctly update the herb percentages
+    # Correctly update the herb percentages and save to CSV
     for treatment in detected_treatments:
         if treatment in herbs:
             herbs[treatment]["percentage"] -= 10
             herbs[treatment]["percentage"] = max(herbs[treatment]["percentage"], 0)  # Ensure percentage doesn't go below 0
+    save_herbs_to_csv(herbs)  # Save updated herbs to CSV
 
     # Save the last analysis result
     last_analysis_result = {
@@ -306,7 +335,8 @@ def get_last_keys():
 def add_herb():
     new_herb = request.json.get('herb_name')
     if new_herb and new_herb not in herbs:
-        herbs[new_herb] = 100
+        herbs[new_herb] = {"percentage": 100}
+        save_herbs_to_csv(herbs)  # Save updated herbs to CSV
         return jsonify({"message": f"Herb '{new_herb}' added successfully."})
     return jsonify({"error": "Herb already exists or invalid name."}), 400
 
@@ -316,8 +346,10 @@ def delete_herb():
     herb_name = request.json.get('herb_name')
     if herb_name in herbs:
         del herbs[herb_name]
+        save_herbs_to_csv(herbs)  # Save updated herbs to CSV
         return jsonify({"message": f"Herb '{herb_name}' deleted successfully."})
     return jsonify({"error": "Herb not found."}), 400
+
 
 
 @app.route('/herbs', methods=['GET'])
