@@ -4,18 +4,29 @@ import spacy
 import csv
 import os
 
-CSV_FILE = 'herbs.csv'
+app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
+
+HERBS_CSV = 'herbs.csv'
+
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    from spacy.cli import download
+    download("en_core_web_sm")
+    nlp = spacy.load("en_core_web_sm")
+
 
 # Load herb data from CSV file
-def load_herbs_from_csv():
+def load_herbs():
     herbs = {}
-    if os.path.exists(CSV_FILE):
-        with open(CSV_FILE, mode='r') as file:
-            reader = csv.DictReader(file)
+    try:
+        with open(HERBS_CSV, mode='r') as csvfile:
+            reader = csv.DictReader(csvfile)
             for row in reader:
                 herbs[row['herb']] = {"percentage": int(row['percentage'])}
-    else:
-        # Initialize with default herbs if CSV doesn't exist
+    except FileNotFoundError:
+        # If the CSV file doesn't exist, initialize with default values
         herbs = {
             "Lavender": {"percentage": 100},
             "Green Tea": {"percentage": 100},
@@ -34,30 +45,23 @@ def load_herbs_from_csv():
             "Sage": {"percentage": 100},
             "Chamomile": {"percentage": 100},
         }
-        save_herbs_to_csv(herbs)
+        save_herbs(herbs)
     return herbs
 
+
 # Save herb data to CSV file
-def save_herbs_to_csv(herbs):
-    with open(CSV_FILE, mode='w', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=['herb', 'percentage'])
+def save_herbs(herbs):
+    with open(HERBS_CSV, mode='w', newline='') as csvfile:
+        fieldnames = ['herb', 'percentage']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for herb, data in herbs.items():
             writer.writerow({'herb': herb, 'percentage': data['percentage']})
 
-# Initialize herbs from CSV
-herbs = load_herbs_from_csv()
 
-app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+# Load herbs data at startup
+herbs = load_herbs()
 
-# Load SpaCy model
-try:
-    nlp = spacy.load("en_core_web_sm")
-except OSError:
-    from spacy.cli import download
-    download("en_core_web_sm")
-    nlp = spacy.load("en_core_web_sm")
 
 # Example symptom-diagnosis database
 symptom_diagnosis_db = {
@@ -303,12 +307,13 @@ def submit():
     # Update the global variable
     last_concatenated_keys = concatenated_keys
 
-    # Correctly update the herb percentages and save to CSV
+    # Correctly update the herb percentages and save them to CSV
     for treatment in detected_treatments:
         if treatment in herbs:
             herbs[treatment]["percentage"] -= 10
             herbs[treatment]["percentage"] = max(herbs[treatment]["percentage"], 0)  # Ensure percentage doesn't go below 0
-    save_herbs_to_csv(herbs)  # Save updated herbs to CSV
+
+    save_herbs(herbs)  # Save updated herbs to CSV
 
     # Save the last analysis result
     last_analysis_result = {
@@ -323,8 +328,6 @@ def submit():
     return jsonify(last_analysis_result)
 
 
-
-
 @app.route('/last_keys', methods=['GET'])
 def get_last_keys():
     global last_concatenated_keys
@@ -336,7 +339,7 @@ def add_herb():
     new_herb = request.json.get('herb_name')
     if new_herb and new_herb not in herbs:
         herbs[new_herb] = {"percentage": 100}
-        save_herbs_to_csv(herbs)  # Save updated herbs to CSV
+        save_herbs(herbs)  # Save the new herb to CSV
         return jsonify({"message": f"Herb '{new_herb}' added successfully."})
     return jsonify({"error": "Herb already exists or invalid name."}), 400
 
@@ -346,15 +349,15 @@ def delete_herb():
     herb_name = request.json.get('herb_name')
     if herb_name in herbs:
         del herbs[herb_name]
-        save_herbs_to_csv(herbs)  # Save updated herbs to CSV
+        save_herbs(herbs)  # Save the changes to CSV
         return jsonify({"message": f"Herb '{herb_name}' deleted successfully."})
     return jsonify({"error": "Herb not found."}), 400
-
 
 
 @app.route('/herbs', methods=['GET'])
 def get_herbs():
     return jsonify(herbs)
+
 
 
 if __name__ == '__main__':
