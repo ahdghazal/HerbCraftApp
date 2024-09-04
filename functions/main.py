@@ -186,13 +186,13 @@ diagnosis_treatment_db = {
 ingredient_key_map = {
     "Lavender": "1", #missing
     "Green Tea": "2",
-    "Fennel": "3", #missing
+    "Felty Germander": "3", #missing
     "Mint": "4",
     "Ginger": "5",
     "Turmeric": "6", #missing
     "Marjoram": "7",
     "Cinnamon": "8",
-    "Felty Germander": "o3",
+    "Fennel": "o3",
     "Thyme": "o2",
     "Rosemary": "o5",
     "Fenugreek": "o4",
@@ -289,8 +289,8 @@ def submit():
 
     for treatment in detected_treatments:
         if treatment in herbs:
-            herbs[treatment]['percentage'] -= 10
-            herbs[treatment]['percentage'] = max(herbs[treatment]['percentage'], 0)  # Ensure percentage doesn't go below 0
+            herbs[treatment] -= 10  # Directly decrement the herb's percentage
+            herbs[treatment] = max(herbs[treatment], 0)  # Ensure percentage doesn't go below 0
 
     # Save the last analysis result
     last_analysis_result = {
@@ -305,6 +305,7 @@ def submit():
     print("Last Analysis Result:", last_analysis_result)  # Debugging: Print the final result
 
     return jsonify(last_analysis_result)
+
 
 
 @app.route('/last_keys', methods=['GET'])
