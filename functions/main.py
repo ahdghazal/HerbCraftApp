@@ -203,22 +203,22 @@ ingredient_key_map = {
 }
 
 herbs = {
-    "Lavender": 100,
-    "Green Tea": 100,
-    "Fennel": 100,
-    "Mint": 100,
-    "Ginger": 100,
-    "Turmeric": 100,
-    "Marjoram": 100,
-    "Cinnamon": 100,
-    "Felty Germander": 100,
-    "Thyme": 100,
-    "Rosemary": 100,
-    "Fenugreek": 100,
-    "Anise": 100,
-    "Cumin": 100,
-    "Sage": 100,
-    "Chamomile": 100,
+    "Lavender": {"percentage":100},
+    "Green Tea": {"percentage":100},
+    "Fennel": {"percentage":100},
+    "Mint": {"percentage":100},
+    "Ginger": {"percentage":100},
+    "Turmeric": {"percentage":100},
+    "Marjoram": {"percentage":100},
+    "Cinnamon": {"percentage":100},
+    "Felty Germander": {"percentage":100},
+    "Thyme": {"percentage":100},
+    "Rosemary": {"percentage":100},
+    "Fenugreek": {"percentage":100},
+    "Anise": {"percentage":100},
+    "Cumin": {"percentage":100},
+    "Sage": {"percentage":100},
+    "Chamomile": {"percentage":100},
 }
 
 # Predefined list of symptoms
@@ -239,12 +239,9 @@ def submit():
     global last_concatenated_keys, last_analysis_result
 
     data = request.json
-    print("Received data:", data)  # Debugging: Print received data
 
     complaint = data.get('complaint', '')
     selected_product_keys = data.get('selectedProductKeys', [])
-    print("Complaint:", complaint)  # Debugging: Print the complaint
-    print("Selected Product Keys:", selected_product_keys)  # Debugging: Print selected keys
 
     # Step 1: Text Analysis for Symptoms, Diagnosis, and Treatments
     doc = nlp(complaint.lower())
@@ -261,14 +258,8 @@ def submit():
             detected_diagnosis.append(diagnosis)
             detected_treatments.extend(treatments)
 
-    print("Detected Symptoms:", detected_symptoms)  # Debugging: Print detected symptoms
-    print("Detected Diagnosis:", detected_diagnosis)  # Debugging: Print detected diagnosis
-    print("Detected Treatments:", detected_treatments)  # Debugging: Print detected treatments
-
     detected_treatments = list(set(detected_treatments))  # Remove duplicates
     treatment_keys = [ingredient_key_map[treatment] for treatment in detected_treatments if treatment in ingredient_key_map]
-
-    print("Treatment Keys:", treatment_keys)  # Debugging: Print treatment keys
 
     # Step 1: Concatenate treatment keys with selected product keys
     all_keys = treatment_keys + selected_product_keys
@@ -281,16 +272,14 @@ def submit():
     sorted_keys = numeric_keys + o_keys
     concatenated_keys = ''.join(sorted_keys)
 
-    # Debugging: Print concatenated keys
-    print("Concatenated Keys:", concatenated_keys)
-
     # Update the global variable
     last_concatenated_keys = concatenated_keys
 
+    # Correctly update the herb percentages
     for treatment in detected_treatments:
         if treatment in herbs:
-            herbs[treatment] -= 10  # Directly decrement the herb's percentage
-            herbs[treatment] = max(herbs[treatment], 0)  # Ensure percentage doesn't go below 0
+            herbs[treatment]["percentage"] -= 10
+            herbs[treatment]["percentage"] = max(herbs[treatment]["percentage"], 0)  # Ensure percentage doesn't go below 0
 
     # Save the last analysis result
     last_analysis_result = {
@@ -302,9 +291,8 @@ def submit():
         "selectedProductKeys": selected_product_keys
     }
 
-    print("Last Analysis Result:", last_analysis_result)  # Debugging: Print the final result
-
     return jsonify(last_analysis_result)
+
 
 
 
