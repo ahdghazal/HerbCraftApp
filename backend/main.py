@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, Response
 from flask_cors import CORS
 import spacy
 import csv
@@ -321,7 +321,7 @@ def submit():
         "herbs": detected_treatments,
         "treatment_keys": treatment_keys,
         "concatenated_keys": concatenated_keys,
-        "selectedProductKeys": selected_product_keys
+        "selectedProductKeyss": selected_product_keys
     }
 
     return jsonify(last_analysis_result)
@@ -330,8 +330,7 @@ def submit():
 @app.route('/last_keys', methods=['GET'])
 def get_last_keys():
     global last_concatenated_keys
-    return last_concatenated_keys  # Returning the updated herbs data
-
+    return jsonify(last_concatenated_keys)
 
 @app.route('/add_herb', methods=['POST'])
 def add_herb():
@@ -354,7 +353,7 @@ def delete_herb():
 
 
 if __name__ == '__main__':
-    app.run(host='localhost', port=8080, debug=True)
+    app.run(host='localhost', port=8000, debug=True)
 
 
 
