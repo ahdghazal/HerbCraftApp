@@ -330,7 +330,7 @@ def submit():
 @app.route('/last_keys', methods=['GET'])
 def get_last_keys():
     global last_concatenated_keys
-    return jsonify({last_concatenated_keys})
+    return jsonify(last_concatenated_keys)
 
 @app.route('/add_herb', methods=['POST'])
 def add_herb():
@@ -353,7 +353,7 @@ def delete_herb():
 
 
 if __name__ == '__main__':
-    app.run(host='localhost', port=8080, debug=True)
+    app.run(host='localhost', port=8000, debug=True)
 
 
 
