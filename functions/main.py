@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, Response
 from flask_cors import CORS
 import spacy
 import csv
@@ -330,7 +330,7 @@ def submit():
 @app.route('/last_keys', methods=['GET'])
 def get_last_keys():
     global last_concatenated_keys
-    return jsonify(str(last_concatenated_keys))  # Force it into a JSON string
+    return Response(f'"{last_concatenated_keys}"', mimetype='application/json')
 
 
 @app.route('/add_herb', methods=['POST'])
