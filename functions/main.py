@@ -321,7 +321,7 @@ def submit():
         "herbs": detected_treatments,
         "treatment_keys": treatment_keys,
         "concatenated_keys": concatenated_keys,
-        "selectedProductKeys": selected_product_keys
+        "selectedProductKeyss": selected_product_keys
     }
 
     return jsonify(last_analysis_result)
@@ -353,7 +353,7 @@ def delete_herb():
 
 
 if __name__ == '__main__':
-    app.run(host='localhost', port=8080, debug=True)
+    app.run(host='localhost', port=8000, debug=True)
 
 
 
