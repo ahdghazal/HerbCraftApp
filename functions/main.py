@@ -330,8 +330,7 @@ def submit():
 @app.route('/last_keys', methods=['GET'])
 def get_last_keys():
     global last_concatenated_keys
-    return Response(f'"{last_concatenated_keys}"', mimetype='application/json')
-
+    return jsonify({last_concatenated_keys})
 
 @app.route('/add_herb', methods=['POST'])
 def add_herb():
