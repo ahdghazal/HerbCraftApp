@@ -29,21 +29,21 @@ def load_herbs():
         # If the CSV file doesn't exist, initialize with default values
         herbs = {
             "Lavender": {"percentage": 100},
-            "Green Tea": {"percentage": 100},
-            "Fennel": {"percentage": 100},
-            "Mint": {"percentage": 100},
-            "Ginger": {"percentage": 100},
-            "Turmeric": {"percentage": 100},
-            "Marjoram": {"percentage": 100},
-            "Cinnamon": {"percentage": 100},
-            "Felty Germander": {"percentage": 100},
+            "Green Tea": {"percentage": 50},
+            "Fennel": {"percentage": 70},
+            "Mint": {"percentage": 40},
+            "Ginger": {"percentage": 50},
+            "Turmeric": {"percentage": 80},
+            "Marjoram": {"percentage": 90},
+            "Cinnamon": {"percentage": 70},
+            "Felty Germander": {"percentage": 60},
             "Thyme": {"percentage": 100},
-            "Rosemary": {"percentage": 100},
-            "Fenugreek": {"percentage": 100},
+            "Rosemary": {"percentage": 55},
+            "Fenugreek": {"percentage": 80},
             "Anise": {"percentage": 100},
-            "Cumin": {"percentage": 100},
+            "Cumin": {"percentage": 80},
             "Sage": {"percentage": 100},
-            "Chamomile": {"percentage": 100},
+            "Chamomile": {"percentage": 30},
         }
         save_herbs(herbs)
     return herbs
