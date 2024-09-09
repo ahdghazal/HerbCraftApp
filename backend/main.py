@@ -352,6 +352,11 @@ def delete_herb():
     return jsonify({"error": "Herb not found."}), 400
 
 
+@app.route('/herbs', methods=['GET'])
+def get_herbs():
+    return jsonify(herbs)
+
+
 if __name__ == '__main__':
     app.run(host='localhost', port=8080, debug=True)
 
